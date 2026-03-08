@@ -915,10 +915,10 @@ canvas{display:none;}
 <!-- API Key Modal -->
 <div class="api-modal" id="apiModal">
   <div class="api-box">
-    <h3>🔑 設定 Gemini API 金鑰</h3>
-    <p>輸入 Gemini API 金鑰以啟用 AI 名片辨識。金鑰只存在你的瀏覽器，不會上傳。<br>
-    前往 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent)">aistudio.google.com/apikey</a> 取得。</p>
-    <input type="password" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
+    <h3>🔑 設定 Claude API 金鑰</h3>
+    <p>輸入 Claude API 金鑰以啟用 AI 名片辨識。金鑰只存在你的瀏覽器，不會上傳。<br>
+    前往 <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a> 取得。</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
     <div class="api-box-btns">
       <button class="api-demo-btn" onclick="window.__call('useDemo')">試用 Demo</button>
       <button class="api-save-btn" onclick="window.__call('saveApiKey')">儲存並啟用</button>
@@ -1406,7 +1406,7 @@ async function doAnalyze(){
       await sleep(1800);
       cardData = generateDemoCard();
     } else {
-      cardData = await callGemini();
+      cardData = await callClaude();
     }
     // 上傳照片到 Storage
     let frontURL = null, backURL = null;
@@ -1455,34 +1455,26 @@ async function doAnalyze(){
   }
 }
 
-async function callGemini(){
-  const parts = [];
-  const prompt = `請辨識這張名片的所有文字，以 JSON 格式回傳：{"name":"","nameEn":"","title":"","company":"","companyEn":"","department":"","phones":[{"type":"office","number":""},{"type":"mobile","number":""}],"email":"","website":"","address":"","social":{"line":"","wechat":""},"rawText":""}。若欄位不存在請留空字串。只回傳JSON，不要任何說明。`;
-
+async function callClaude(){
+  const content = [];
   if(slotImages[1]){
-    parts.push({ inlineData:{ mimeType:'image/jpeg', data: slotImages[1].split(',')[1] } });
+    content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:slotImages[1].split(',')[1]}});
+    content.push({type:'text',text:'（名片正面）'});
   }
   if(slotImages[2]){
-    parts.push({ inlineData:{ mimeType:'image/jpeg', data: slotImages[2].split(',')[1] } });
+    content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:slotImages[2].split(',')[1]}});
+    content.push({type:'text',text:'（名片背面）'});
   }
-  parts.push({ text: prompt });
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts }] })
-    }
-  );
-  if(!res.ok){
-    const e = await res.json();
-    throw new Error(e.error?.message || 'Gemini API 錯誤');
-  }
-  const d = await res.json();
-  const text = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  const clean = text.replace(/```json|```/g,'').trim();
-  return JSON.parse(clean);
+  content.push({type:'text',text:`請辨識名片，以 JSON 回傳：{"name":"","nameEn":"","title":"","company":"","companyEn":"","department":"","phones":[{"type":"office","number":""},{"type":"mobile","number":""}],"email":"","website":"","address":"","social":{"line":"","wechat":""},"rawText":""}。若欄位不存在請留空字串。只回傳JSON。`});
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-opus-4-5',max_tokens:1000,messages:[{role:'user',content}]})
+  });
+  if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||'API錯誤'); }
+  const d=await res.json();
+  const text=d.content[0].text.replace(/```json|```/g,'').trim();
+  return JSON.parse(text);
 }
 
 function generateDemoCard(){
