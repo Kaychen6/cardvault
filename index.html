@@ -1033,7 +1033,7 @@ function init(){
       // 載入名片資料
       loadCards();
       loadTeamMembers();
-      if(!apiKey) setTimeout(()=>showApiModal(), 800);
+      if(!localStorage.getItem('cv_gemini_key')) setTimeout(()=>showApiModal(), 800);
     } else {
       // 未登入，顯示登入畫面
       CURRENT_USER = null;
@@ -1589,7 +1589,12 @@ function today(){ return new Date().toISOString().slice(0,10); }
 ════════════════════════════════════════ */
 function showApiModal(){ document.getElementById('apiModal').classList.add('show'); }
 function showUserMenu(){
-  if(confirm(`登出 ${CURRENT_USER?.name || ''} 嗎？`)) doSignOut();
+  const choice = confirm(`登入者：${CURRENT_USER?.name || ''}
+
+確定要登出嗎？
+（點「取消」可設定 API 金鑰）`);
+  if(choice) doSignOut();
+  else showApiModal();
 }
 function saveApiKey(){
   const k=document.getElementById('apiKeyInput').value.trim();
