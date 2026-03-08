@@ -916,8 +916,8 @@ canvas{display:none;}
 <div class="api-modal" id="apiModal">
   <div class="api-box">
     <h3>🔑 設定 Gemini API 金鑰</h3>
-    <p>輸入 Gemini API 金鑰以啟用 AI 名片辨識。金鑰儲存在本機，不會上傳。<br>
-    前往 <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent)">aistudio.google.com</a> 免費取得。</p>
+    <p>輸入 Gemini API 金鑰以啟用 AI 名片辨識。金鑰只存在你的瀏覽器，不會上傳。<br>
+    前往 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent)">aistudio.google.com/apikey</a> 取得。</p>
     <input type="password" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
     <div class="api-box-btns">
       <button class="api-demo-btn" onclick="window.__call('useDemo')">試用 Demo</button>
@@ -999,7 +999,7 @@ let slotImages = {1:null, 2:null};
 let camStream = null;
 let camFacingMode = 'environment';
 let exportFilter = 'all';
-let apiKey = localStorage.getItem('cv_api_key') || 'AIzaSyDZukpeMTUXYvoVmY4SL10qS9biUss2qaA';
+let apiKey = localStorage.getItem('cv_gemini_key') || '';
 let isDemoMode = false;
 
 /* ════════════════════════════════════════
@@ -1603,7 +1603,7 @@ function saveApiKey(){
   const k=document.getElementById('apiKeyInput').value.trim();
   if(!k){ showToast('請輸入 API 金鑰','error'); return; }
   apiKey=k; isDemoMode=false;
-  localStorage.setItem('cv_api_key',k);
+  localStorage.setItem('cv_gemini_key',k);
   document.getElementById('apiModal').classList.remove('show');
   showToast('API 金鑰已儲存！','success');
 }
